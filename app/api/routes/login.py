@@ -1,4 +1,5 @@
-from datetime import timedelta, datetime, timezone
+import datetime
+from datetime import timedelta
 from typing import Annotated, Any
 from uuid import UUID
 
@@ -31,13 +32,35 @@ def login_access_token(
     )
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect email or password")
+    
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     refresh_token_expires = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
-    user_service.update_refresh_token(session=session, email=user.email, refresh_token=refresh_token_expires)
+    
+    # Create tokens
+    access_token = security.create_access_token(
+        user.id, 
+        expires_delta=access_token_expires
+    )
+    refresh_token = security.create_refresh_token(
+        user.id,
+        expires_delta=refresh_token_expires
+    )
+    
+    # Store the refresh token string, not the expiration time
+    user_service.update_refresh_token(
+        session=session, 
+        email=user.email, 
+        refresh_token=refresh_token
+    )
+    
+    # Calculate expiration time as formatted string
+    expiration_time = datetime.datetime.now(datetime.timezone.utc) + access_token_expires
+    expires_in = expiration_time.strftime("%d/%m/%y-%H:%M")
+    
     return Token(
-        access_token=security.create_access_token(user.id, expires_delta=access_token_expires),
-        expires_in = access_token_expires.total_seconds(),
-        refresh_token=security.create_refresh_token(user.id,expires_delta= refresh_token_expires)
+        access_token=access_token,
+        expires_in=expires_in,
+        refresh_token=refresh_token
     )
 
 

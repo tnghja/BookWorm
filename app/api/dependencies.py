@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jwt.exceptions import InvalidTokenError
 from pydantic import ValidationError
 from sqlalchemy import Boolean
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.core import security
 from app.core.config import settings
@@ -27,19 +27,58 @@ TokenDep = Annotated[str, Depends(reusable_oauth2)]
 
 def get_current_user(session: SessionDep, token: TokenDep) -> Type[User]:
     try:
+        # Decode and print the raw payload for debugging
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
         )
-        token_data = TokenPayload(**payload)
-    except (InvalidTokenError, ValidationError):
+        print("Raw JWT payload:", payload)
+
+        # Validate payload structure
+        if "sub" not in payload:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Invalid token payload: missing 'sub' claim"
+            )
+
+        # Try to parse the payload into our TokenPayload model
+        token_data = TokenPayload(**{"payload": payload["sub"]})
+
+        # Convert user ID to int, with error handling
+        try:
+            user_id = int(token_data.payload)
+        except (TypeError, ValueError):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Invalid user ID in token"
+            )
+
+        # Query the user
+        query = select(User).where(User.id == user_id)
+        user = session.exec(query).first()
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User with id {user_id} not found"
+            )
+
+        return user
+
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired"
+        )
+    except jwt.InvalidTokenError as e:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Could not validate credentials",
+            detail=f"Could not validate credentials: {str(e)}"
         )
-    user = session.get(User, token_data.payload)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Invalid token payload structure: {str(e)}"
+        )
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]

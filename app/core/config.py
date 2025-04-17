@@ -32,9 +32,9 @@ class Settings(BaseSettings):
         extra="ignore",
     )
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str = secrets.token_urlsafe(32)
+    SECRET_KEY: str = "123456"
     # 60 minutes * 24 hours * 8 days = 8 days
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15 * 60
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 10
     FRONTEND_HOST: str = "http://localhost:5173"
 

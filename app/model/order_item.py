@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 
 class OrderItem(SQLModel, table=True):
     """Represents the order_item table"""
+    __tablename__ = "order_item"
     id: Optional[int] = Field(default=None, primary_key=True)
     order_id: int = Field(foreign_key="order.id", index=True)
     book_id: int = Field(foreign_key="book.id", index=True)

@@ -64,3 +64,4 @@ session : SessionDep
 @router.get("/{book_id}", response_model=BookInfo)
 def book(session : SessionDep,book_id: int) -> BookInfo:
     return get_book(session=session, book_id = book_id)
+

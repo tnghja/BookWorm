@@ -6,7 +6,7 @@ from sqlmodel import SQLModel, Field
 
 class BaseUser(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
-    is_admin: bool = False
+    admin: bool = False
     first_name: str | None = Field(default=None, max_length=50)
     last_name: str | None = Field(default=None, max_length=50)
 
@@ -38,7 +38,7 @@ class UpdatePassword(SQLModel):
 
 # Properties to return via API, id is always required
 class UserPublic(BaseUser):
-    id: uuid.UUID
+    id: int
 
 
 class UsersPublic(SQLModel):
