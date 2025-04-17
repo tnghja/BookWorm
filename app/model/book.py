@@ -13,12 +13,11 @@ if TYPE_CHECKING:
     from .discount import Discount
     from .order import OrderItem
 
-
 class Book(SQLModel, table=True):
     """Represents the book table"""
     id: Optional[int] = Field(default=None, primary_key=True)
-    category_id: int = Field(foreign_key="category.id", index=True)
-    author_id: int = Field(foreign_key="author.id", index=True)
+    category_id: int = Field(foreign_key="category.id", index=True)  # Remove default=None
+    author_id: int = Field(foreign_key="author.id", index=True)  # Remove default=None
     book_title: str = Field(max_length=255)
     book_summary: Optional[str] = Field(default=None)
     book_price: Decimal = Field(max_digits=5, decimal_places=2)

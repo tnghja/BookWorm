@@ -13,7 +13,7 @@ class Message(SQLModel):
 class Token(SQLModel):
     access_token: str
     refresh_token: str
-    token_type: str = "bearer"
+    token_type: str = "Bearer"
     expires_in: int
 
 
