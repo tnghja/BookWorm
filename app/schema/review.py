@@ -5,7 +5,7 @@ from sqlalchemy import func
 from sqlmodel import Field, SQLModel, Column, DateTime
 
 from app.schema.book import BasePagination
-from app.model.review import BaseReview
+from app.model.review import    Review
 
 class ReviewCreateRequest(SQLModel):
     title: str = Field(..., description="Review title")
@@ -55,4 +55,4 @@ class ReviewResponse(BasePagination):
     three_stars: Optional[int] = Field(default=0, nullable=True)
     two_stars: Optional[int] = Field(default=0, nullable=True)
     one_stars: Optional[int] = Field(default=0, nullable=True)
-    reviews : List[BaseReview]
+    reviews : List[Review]

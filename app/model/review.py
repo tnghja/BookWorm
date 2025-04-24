@@ -10,6 +10,7 @@ from app.model.book import Book
 
 
 class BaseReview(SQLModel):
+    # review_id: int = Field(default=None)
     review_title: str = Field(max_length=120)
     review_details: Optional[str] = Field(default=None)
     review_date: datetime = Field(

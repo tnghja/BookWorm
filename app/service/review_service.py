@@ -82,7 +82,7 @@ def get_reviews_for_book(session: SessionDep, book_id: int, req: ReviewRequest) 
     return ReviewResponse(
         reviews=reviews,
         count=total_count,
-        page=req.page,
+        current_page=req.page,
         items_per_page=req.items_per_page,
         total_pages=total_pages,
         start_item=offset + 1 if total_count > 0 else 0,

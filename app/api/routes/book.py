@@ -11,7 +11,7 @@ from app.schema.book import BookListRequest, BookInfo
 router = APIRouter(prefix="/books", tags=["books"])
 
 
-@router.get("/", response_model=BookListResponse)
+@router.get("", response_model=BookListResponse)
 def list_books(
     session : SessionDep,
     req : BookListRequest = Depends(BookListRequest),

@@ -14,7 +14,6 @@ class Token(SQLModel):
     access_token: str
     refresh_token: str
     token_type: str = "Bearer"
-    expires_in: str  # Format: "DD/MM/YY-HH:MM"
 
 
 # Contents of JWT token

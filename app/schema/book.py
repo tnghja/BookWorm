@@ -7,7 +7,7 @@ from app.model.book import Book
 from sqlmodel import SQLModel, Field
 class BasePagination(SQLModel):
     count: int
-    page: int
+    current_page: int
     items_per_page: int
     total_pages: int
     start_item: int
@@ -33,7 +33,7 @@ class BookListRequest(SQLModel):
     # Rating filter - accepts minimum rating (1-5 stars)
     min_rating: Optional[int] = Field(default=None, ge=1, le=5)
     # Sorting options
-    sort_by: Optional[Literal['on_sale', 'popularity', 'price_asc', 'price_desc', 'recommend']] = Field(default='title')
+    sort_by: Optional[Literal['on_sale', 'popularity', 'price_asc', 'price_desc', 'recommend']] = Field(default='on_sale')
     limit : Optional[int] = Field(default=None, ge=1)
 
 class BookInfo(SQLModel):

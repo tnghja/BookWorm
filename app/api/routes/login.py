@@ -35,31 +35,28 @@ def login_access_token(
     
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     refresh_token_expires = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES)
-    
-    # Create tokens
+
     access_token = security.create_access_token(
         user.id, 
         expires_delta=access_token_expires
     )
+
     refresh_token = security.create_refresh_token(
         user.id,
         expires_delta=refresh_token_expires
     )
     
-    # Store the refresh token string, not the expiration time
+
     user_service.update_refresh_token(
         session=session, 
         email=user.email, 
         refresh_token=refresh_token
     )
     
-    # Calculate expiration time as formatted string
-    expiration_time = datetime.datetime.now(datetime.timezone.utc) + access_token_expires
-    expires_in = expiration_time.strftime("%d/%m/%y-%H:%M")
+
     
     return Token(
         access_token=access_token,
-        expires_in=expires_in,
         refresh_token=refresh_token
     )
 
@@ -70,7 +67,6 @@ def test_token(current_user: CurrentUser) -> Any:
     Test access token
     """
     return current_user
-
 
 @router.get("/refresh-token")
 def refresh_token(session: SessionDep, user_id: UUID = Depends(validate_refresh_token)) -> Any:

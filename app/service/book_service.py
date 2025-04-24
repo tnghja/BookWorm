@@ -118,7 +118,7 @@ def get_books(*, session : SessionDep, req: BookListRequest) -> BookListResponse
 
     # --- 4. Get total count for pagination ---
     count_query = select(func.count()).select_from(query.subquery())
-    total = session.exec(count_query).scalar_one()
+    total = session.exec(count_query).one()
 
     # --- 5. Apply pagination ---
     offset = (req.page - 1) * req.items_per_page
@@ -131,15 +131,17 @@ def get_books(*, session : SessionDep, req: BookListRequest) -> BookListResponse
     # Process results
     books_with_prices = []
     for row in rows:
-        book_data = {
-            "book": row.Book,
-            "final_price": row.final_price,
-            "discount_price": row.discount_price,
-            "discount_amount": row.discount_amount,
-            "review_count": row.review_count,
-            "avg_rating": float(row.avg_rating) if row.avg_rating is not None else None
-        }
-        books_with_prices.append(book_data)
+        book_info = BookInfo(
+            book=row.Book,
+            final_price=row.final_price,
+            discount_price=row.discount_price,
+            discount_amount=row.discount_amount,
+            review_count=row.review_count,
+            avg_rating=float(row.avg_rating) if row.avg_rating is not None else None,
+            author_name=row.Book.author.author_name if row.Book.author else None,
+            category_name=row.Book.category.category_name if row.Book.category else None
+        )
+        books_with_prices.append(book_info)
 
     # Prepare pagination info
     total_pages = (total + req.items_per_page - 1) // req.items_per_page if total else 0
@@ -147,9 +149,9 @@ def get_books(*, session : SessionDep, req: BookListRequest) -> BookListResponse
     end_item = min(offset + req.items_per_page, total)
 
     return BookListResponse(
-        data=books_with_prices,
+        books=books_with_prices,
         count=total,
-        page=req.page,
+        current_page=req.page,
         items_per_page=req.items_per_page,
         total_pages=total_pages,
         start_item=start_item,
@@ -190,7 +192,8 @@ def get_book(*, session: SessionDep, book_id: int) -> BookInfo:
         book=book,
         author_name=book.author.author_name ,
         category_name=book.category.category_name,
-        discount_price=discount_price if discount_price is not None else 0
+        discount_price=discount_price if discount_price is not None else 0,
+        final_price = book.book_price - ( discount_price if discount_price is not None else 0)  
     )
 
 

@@ -1,33 +1,57 @@
 import React from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom'
 import './App.css'
 import Header from "./components/Header.jsx"
 import Homepage from "./pages/Homepage.jsx"
+import ListProduct from "./pages/ListProduct.jsx"
 import Footer from "./components/Footer.jsx"
-// Placeholder pages
-const Shop = () => <div className="p-8"><h1 className="text-2xl font-bold">Shop Page</h1></div>
-const About = () => <div className="p-8"><h1 className="text-2xl font-bold">About Page</h1></div>
-const Cart = () => <div className="p-8"><h1 className="text-2xl font-bold">Cart Page</h1></div>
-const SignIn = () => <div className="p-8"><h1 className="text-2xl font-bold">Sign In Page</h1></div>
+import BookPage from "./pages/BookPage.jsx"
+import CartPage from './pages/CartPage'
+import AboutPage from './pages/AboutPage'
+import LoginPage from './pages/LoginPage.jsx'
+
+import {
+  QueryClient,
+  QueryClientProvider,
+} from '@tanstack/react-query'
+
+const queryClient = new QueryClient()
+
+
+// Layout component that wraps the content
+const Layout = () => {
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-grow bg-gray-50 py-8">
+        <div className="container mx-auto px-4">
+          <Outlet />
+        </div>
+      </main>
+      <Footer />
+    </div>
+  )
+}
 
 function App() {
   return (
-    <BrowserRouter>
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <main>
-          <Routes>
-            <Route path="/" element={<Homepage />} />
-            <Route path="/shop" element={<Shop />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/signin" element={<SignIn />} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<Homepage />} />
+          <Route path="/shop" element={<ListProduct />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/signin" element={<LoginPage />} />
+          <Route path="/product/:id" element={<BookPage/>} />
+          <Route path="/cart" element={<CartPage />} />
+        </Route>
+      </Routes>
     </BrowserRouter>
+    </QueryClientProvider>
+    
   )
 }
 
 export default App
+
