@@ -38,8 +38,8 @@ class BookListRequest(SQLModel):
 
 class BookInfo(SQLModel):
     book: Book
-    final_price: Decimal
-    discount_price: Optional[Decimal]
+    final_price: Decimal = None
+    # discount_price: Optional[Decimal]
     discount_amount: Decimal = None
     avg_rating: Optional[float] = None
     review_count: int = 0  # Default to 0 if no reviews

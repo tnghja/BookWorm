@@ -17,10 +17,10 @@ from app.schema.token import Message, NewPassword, Token
 from app.schema.user import UserPublic
 from app.model.user import User
 
-router = APIRouter(tags=["login"])
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/login/access-token")
+@router.post("/token")
 def login_access_token(
     session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ) -> Token:
@@ -61,15 +61,15 @@ def login_access_token(
     )
 
 
-@router.post("/login/test-token", response_model=UserPublic)
+@router.post("/token/test", response_model=UserPublic)
 def test_token(current_user: CurrentUser) -> Any:
     """
     Test access token
     """
     return current_user
 
-@router.get("/refresh-token")
-def refresh_token(session: SessionDep, user_id: UUID = Depends(validate_refresh_token)) -> Any:
+@router.get("/token/refresh")
+def refresh_token(session: SessionDep, user_id: int = Depends(validate_refresh_token)) -> Any:
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     new_access_token = security.create_access_token(
         subject=user_id, expires_delta=access_token_expires
@@ -83,4 +83,4 @@ def logout(session: SessionDep, current_user: Annotated[User, Depends(get_curren
     else :
         raise HTTPException(status_code=401, detail="User not found")
 
-
+    

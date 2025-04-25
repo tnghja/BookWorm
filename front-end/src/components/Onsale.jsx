@@ -81,6 +81,7 @@ export default function Onsale() {
                                     {books.map((book) => (
                                         <CarouselItem key={book.book.id} className="basis-full sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
                                             <BookCard
+                                                id={book.book.id}
                                                 title={book.book.book_title}
                                                 author={book.author_name}
                                                 originalPrice={book.book.book_price}

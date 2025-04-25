@@ -192,8 +192,10 @@ def get_book(*, session: SessionDep, book_id: int) -> BookInfo:
         book=book,
         author_name=book.author.author_name ,
         category_name=book.category.category_name,
-        discount_price=discount_price if discount_price is not None else 0,
-        final_price = book.book_price - ( discount_price if discount_price is not None else 0)  
+        # discount_price=discount_price if discount_price is not None else 0,
+        final_price = discount_price if discount_price is not None else book.book_price,
+        discount_amount = book.book_price - (discount_price if discount_price is not None else 0)
+
     )
 
 

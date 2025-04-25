@@ -70,13 +70,14 @@ export default function Feature() {
                         {books.length > 0 ? (
                             books.map((book) => (
                                 <BookCard
+                                    id={book.book.id}
                                     key={book.book.id}
                                     title={book.book.title}
                                     author={book.author_name}
                                     originalPrice={book.book.book_price}
                                     salePrice={book.final_price}
-                                    image={book.book.cover_image || ""}
-                                    className=""
+                                    image={book.book.book_cover_photo }
+                          
                                 />
                             ))
                         ) : (

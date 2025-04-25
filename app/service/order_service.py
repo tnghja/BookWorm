@@ -59,16 +59,33 @@ def place_order(session: SessionDep, req: OrderRequest, current_user: User) -> O
         book_data: Dict[int, Dict] = {}
         for row in books_with_prices:
             book = row.Book
-            # if book.stock_quantity < quantity_map[book.id]:
-            #     raise HTTPException(
-            #         status_code=400,
-            #         detail=f"Insufficient stock for book '{book.title}'. Available: {book.stock_quantity}, Requested: {quantity_map[book.id]}"
-            #     )
             book_data[book.id] = {
                 "book": book,
                 "final_price": row.final_price,
                 "discount_price": row.discount_price
             }
+        print(book_data)
+        # Validate each item: quantity range, price match, and coupon/discount validity
+        for item in req.list_item:
+            # Check if the book exists in the fetched data
+            if item.book_id not in book_data:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Book with id {item.book_id} not found."
+                )
+            # Check price match
+            current_price = float(book_data[item.book_id]["final_price"])
+            if item.price is not None and abs(item.price - current_price) > 0.01:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Price for book {item.book_id} has changed. Current price: {current_price}, submitted price: {item.price}"
+                )
+            # Check if discount/coupon has expired (discount_price is None if expired or not present)
+            if book_data[item.book_id]["discount_price"] is None and item.price is not None and item.price != float(book_data[item.book_id]["final_price"]):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Discount/coupon for book {item.book_id} has expired."
+                )
         
         # 6. Create order
         total_amount = Decimal(str(sum((
