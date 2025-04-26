@@ -1,7 +1,6 @@
 import { useEffect, useContext } from 'react';
 import { useCartStore } from '@/store/cartStore';
 import { AuthContext } from '@/components/context/AuthContext';
-import isEqual from 'lodash.isequal';
 
 const GUEST_CART_KEY = 'cart-guest';
 

@@ -1,5 +1,9 @@
 from datetime import datetime
 from typing import List, Dict, Tuple
+
+from fastapi import HTTPException
+from app.model import Order, OrderItem
+from app.model import User
 from sqlalchemy import func, desc, asc
 from sqlmodel import select
 
@@ -96,15 +100,46 @@ def get_reviews_for_book(session: SessionDep, book_id: int, req: ReviewRequest) 
         one_stars=star_counts[1]
     )
 
-def create_review(book_id: int, session: SessionDep, req: ReviewCreateRequest) -> BaseReview:
+
+def create_review(book_id: int, user: User, session: SessionDep, req: ReviewCreateRequest) -> BaseReview:
+
+
+    user_orders_subquery = (
+        select(Order.id)
+        .where(Order.user_id == user.id)
+        .scalar_subquery() # Use scalar_subquery if expecting one or zero, or just subquery()
+    )
+
+    stmt = (
+        select(OrderItem)
+        .where(OrderItem.order_id.in_(user_orders_subquery)) # Check if the order item belongs to one of the user's orders
+        .where(OrderItem.book_id == book_id)
+    )
+
+    # Execute the query to find a matching order item
+    purchased_item = session.exec(stmt).first()
+
+    # Check if a matching OrderItem was found (meaning the user purchased the book)
+    if not purchased_item:
+        raise HTTPException(
+            status_code=403,
+            detail="User has not purchased this book or no such order exists."
+        )
+
     review = Review(
-        book_id = book_id,
-        review_title = req.title,
+        book_id=book_id,
+        user_id=user.id, # Associate review with the user
+        review_title=req.title,
         review_details=req.details,
         rating_start=req.star,
-        review_date= datetime.today()
+        review_date=datetime.today() # Consider using timezone-aware datetime
     )
+
+    # Add, commit, and refresh the session
     session.add(review)
     session.commit()
     session.refresh(review)
+
     return review
+
+

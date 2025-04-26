@@ -13,7 +13,7 @@ export const useCartStore = create((set, get) => ({
     }
   },
   // Actions - functions to modify the state
-  addItem: (book) => {
+  addItem: (book, quantity) => {
     const { items } = get(); // Get current items array from state
     const existingItem = items.find((item) => item.id === book.id);
     
@@ -22,7 +22,7 @@ export const useCartStore = create((set, get) => ({
       set((state) => ({
         items: state.items.map((item) =>
           item.id === book.id
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: Math.min(8, item.quantity + quantity) }
             : item
         ),
       }));

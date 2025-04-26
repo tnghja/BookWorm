@@ -14,6 +14,9 @@ export const setAxiosAccessToken = (token) => {
   accessToken = token;
 };
 
+export const getAxiosAccessToken = () => {
+  return accessToken;
+};
 // Request interceptor for token injection using the state-managed token
 api.interceptors.request.use(config => {
   if (accessToken) {

@@ -1,91 +1,72 @@
-import { useState, useEffect, useCallback } from 'react'; // Keep useCallback for potential other uses if needed
+import { useState, useEffect } from 'react'; // Removed useCallback as it wasn't used
 import { Link, useLocation } from 'react-router-dom';
-import logo from '../assets/logo.png'; // Ensure this path is correct
+import logo from '../assets/logo.png';
 import { Menu, X, User, LogOut } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"; // Ensure path is correct
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"; // Ensure path is correct
+} from "@/components/ui/dropdown-menu"; // Keep Dropdown imports
 
-import SignInForm from './SignInForm'; // Ensure path is correct
-import { useAuth } from '../components/context/AuthContext'; // Ensure path is correct
-import { useCartStore } from '@/store/cartStore'; // Ensure path is correct
+import SignInForm from './SignInForm'; // Keep SignInForm import
+import { useAuth } from './context/AuthContext'; // Keep useAuth import - path might need adjustment
+import { useCartStore } from '@/store/cartStore'; // Keep useCartStore import
 
 export default function Header() {
   const [activeLink, setActiveLink] = useState('home');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const location = useLocation();
-  const { user, isAuthenticated, isLoading, logout, error } = useAuth();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const items = useCartStore((state) => state.items);
-
-  // console.log(user, isAuthenticated, isLoading); // Keep for debugging if needed
-
+  const [showSignIn, setShowSignIn] = useState(false);
+  // Dynamic Cart link text based on items length
+  const cartLinkText = `Cart (${items?.length || 0})`;
   const navLinks = [
     { id: 'home', name: 'Home', path: '/' },
     { id: 'shop', name: 'Shop', path: '/shop' },
     { id: 'about', name: 'About', path: '/about' },
-    { id: 'cart', name: `Cart (${items?.length || 0})`, path: '/cart' },
+    { id: 'cart', name: cartLinkText, path: '/cart' }, // Use dynamic text
   ];
 
   const handleLinkClick = (id) => {
     setActiveLink(id);
-    setIsMobileMenuOpen(false); // Close mobile menu on link click
+    setIsMobileMenuOpen(false);
   };
 
   // Effect to set active link based on current URL path
   useEffect(() => {
     const currentPath = location.pathname;
-    const activeNav = navLinks.find(link => currentPath === link.path || (link.id !== 'home' && currentPath.startsWith(link.path)));
-    if (activeNav) {
-      setActiveLink(activeNav.id);
-    } else {
-      setActiveLink(''); // Or set to a default if no match
-    }
-  }, [location.pathname, navLinks]);
+    // Find the link whose path exactly matches or is a prefix of the current path (excluding home '/')
+    const activeNav = navLinks.find(link =>
+      currentPath === link.path || (link.path !== '/' && currentPath.startsWith(link.path))
+    );
+    setActiveLink(activeNav ? activeNav.id : ''); // Set to active ID or empty string
+  }, [location.pathname]); // Dependency array simplified
 
-  // Effect to reset state on logout
+  // Effect to reset state on logout or initial load without auth
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      setActiveLink(location.pathname === '/' ? 'home' : '');
-      setIsMobileMenuOpen(false);
-      setIsDialogOpen(false);
+      // Only reset activeLink based on location, not necessarily to 'home'
+      const currentPath = location.pathname;
+      const activeNav = navLinks.find(link =>
+        currentPath === link.path || (link.path !== '/' && currentPath.startsWith(link.path))
+      );
+      setActiveLink(activeNav ? activeNav.id : '');
+      // REMOVE setIsDialogOpen(false);
     }
-  }, [isAuthenticated, isLoading, location.pathname]);
-
-  // --- Effect to close main mobile menu when sign-in dialog opens ---
-  useEffect(() => {
-    if (isDialogOpen) {
-      // If the sign-in dialog is open, ensure the main mobile menu is closed
-      setIsMobileMenuOpen(false);
-    }
-    // Dependency: Run when the dialog's open state changes
-  }, [isDialogOpen]);
-  // --- ---
+    // We need navLinks in dependency if it changes (e.g., cart count)
+  }, [isAuthenticated, isLoading, location.pathname, navLinks]);
 
   const handleLogout = () => {
     logout();
-    setIsDialogOpen(false);
+    setIsMobileMenuOpen(false); // Close mobile menu on logout
+    // REMOVE setIsDialogOpen(false);
   };
 
-  const handleLoginSuccess = () => {
-    setIsDialogOpen(false);
+  // Callback to close mobile menu if login is successful *from* the mobile menu trigger
+  const handleLogin = () => {
+    setShowSignIn(true);
   };
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      setIsDialogOpen(true);
-    }
-  }, [error]);
 
   return (
     <div className="relative top-0 left-0 z-50 flex justify-between h-16 items-center bg-cyan-100 px-4 shadow-md">
@@ -106,15 +87,16 @@ export default function Header() {
             key={link.id}
             to={link.path}
             className={`px-3 py-2 text-sm font-medium rounded transition-colors ${activeLink === link.id
-              ? 'bg-blue-700 text-white' // Active link style
-              : 'text-gray-700 hover:text-white hover:bg-blue-400' // Inactive link style
+              ? 'bg-blue-700 text-white'
+              : 'text-gray-700 hover:text-white hover:bg-blue-400'
               }`}
             onClick={() => handleLinkClick(link.id)}
           >
-            {link.id === 'cart' ? `Cart (${items?.length || 0})` : link.name}
+            {/* Directly use link.name which is now dynamic for cart */}
+            {link.name}
           </Link>
         ))}
-
+       
         {/* Auth Section (Desktop) */}
         {isLoading ? (
           <div className="px-3 py-2 text-sm font-medium text-gray-500">Loading...</div>
@@ -135,23 +117,18 @@ export default function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          // Desktop Dialog: Use state setter directly for onOpenChange
-          // Using isMobileSignInDialogOpen state for both, might rename if confusing
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger className="px-3 py-2 text-sm font-medium rounded transition-colors text-gray-700 hover:text-white hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-              Sign In
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Sign In</DialogTitle>
-                <DialogDescription>
-                  Enter your email and password to sign in to your account.
-                </DialogDescription>
-              </DialogHeader>
-              <SignInForm onLoginSuccess={handleLoginSuccess} />
-            </DialogContent>
-          </Dialog>
+          // Render SignInForm component, passing the desktop trigger button as a prop
+          <>
+          <button onClick={() => handleLogin()} className="px-3 py-2 text-sm font-medium rounded transition-colors text-gray-700 hover:text-white hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Sign In
+          </button>
+          <SignInForm
+            open={showSignIn}
+            onOpenChange={setShowSignIn}
+          />
+          </>
         )}
+        
       </nav>
 
       {/* Mobile Navigation Button */}
@@ -167,7 +144,7 @@ export default function Header() {
 
         {/* Mobile Menu Dropdown */}
         {isMobileMenuOpen && (
-          <div className={`z-40 absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none`}>
+          <div className={`z-60 absolute right-0 top-full mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none`}>
             <nav className="flex flex-col p-2 space-y-1" role="menu" aria-orientation="vertical" aria-labelledby="mobile-menu-button">
               {/* Mobile Nav Links */}
               {navLinks.map((link) => (
@@ -179,13 +156,14 @@ export default function Header() {
                     ? 'bg-blue-700 text-white'
                     : 'text-gray-700 hover:text-white hover:bg-blue-400'
                     }`}
-                  onClick={() => handleLinkClick(link.id)} // Also closes menu
+                  onClick={() => handleLinkClick(link.id)} // This already closes the menu
                 >
-                  {link.id === 'cart' ? `Cart (${items?.length || 0})` : link.name}
+                  {link.name}
                 </Link>
               ))}
-              <hr className="my-2 border-gray-200" />
-
+             
+              
+              
               {/* Auth Section (Mobile) */}
               {isLoading ? (
                 <div className="px-3 py-2 text-base font-medium text-gray-500" role="menuitem">Loading...</div>
@@ -196,7 +174,7 @@ export default function Header() {
                     <span>{user.first_name} {user.last_name}</span>
                   </div>
                   <button
-                    onClick={handleLogout}
+                    onClick={handleLogout} // This closes the menu via state update
                     role="menuitem"
                     className="flex items-center gap-2 w-full text-left px-3 py-2 text-base font-medium rounded text-red-600 hover:bg-red-50 focus:bg-red-50 transition-colors focus:outline-none"
                   >
@@ -205,28 +183,19 @@ export default function Header() {
                   </button>
                 </>
               ) : (
-                // --- Mobile Sign In Dialog (Revised Logic) ---
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    {/* Button no longer needs onClick to manage dialog state */}
-                    <button
-                      role="menuitem"
-                      className="block w-full text-left px-3 py-2 text-base font-medium rounded text-gray-700 hover:text-white hover:bg-blue-400 transition-colors focus:outline-none"
-                    >
-                      Sign In
-                    </button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Sign In</DialogTitle>
-                      <DialogDescription>
-                        Enter email and password to sign in.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <SignInForm />
-                  </DialogContent>
-                </Dialog>
-                 // --- End Mobile Sign In Dialog ---
+                // Render SignInForm component, passing the mobile trigger button as a prop
+                <>
+          <button onClick={() => handleLogin()} className="px-3 py-2 text-sm font-medium rounded transition-colors text-gray-700 hover:text-white hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Sign In
+          </button>
+          <hr className="my-2 border-gray-200" />
+          <SignInForm
+            open={showSignIn}
+            onOpenChange={setShowSignIn}
+          />
+          </>
+              
+             
               )}
             </nav>
           </div>

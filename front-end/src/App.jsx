@@ -14,7 +14,7 @@ import {
   QueryClient,
   QueryClientProvider,
 } from '@tanstack/react-query'
-
+import { CurrencyProvider } from './components/context/CurrencyContext'
 const queryClient = new QueryClient()
 
 
@@ -36,6 +36,7 @@ const Layout = () => {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <CurrencyProvider>
       <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
@@ -48,6 +49,7 @@ function App() {
         </Route>
       </Routes>
     </BrowserRouter>
+      </CurrencyProvider>
     </QueryClientProvider>
     
   )

@@ -3,6 +3,7 @@ import { getReviews } from "../api/review";
 import PagePagination from "./PagePagination";
 import generatePageNumbers from "../helper/helper";
 import { useState, useMemo } from "react";
+
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 function ReviewList({ bookId }) {
@@ -53,7 +54,8 @@ function ReviewList({ bookId }) {
 
       <div className="text-lg font-semibold">Customer Reviews</div>
       <div className="text-2xl font-bold gap-4 ">{reviewData?.avg_rating.toFixed(1)} Star</div>
-      <div className="text-sm text-gray-600 gap-4">({reviewData?.count})
+      <div className="text-sm text-gray-600 gap-4">
+        <span className="underline cursor-pointer " onClick={() => handleStarFilterClick('all')}>All({reviewData?.reviews_count}) </span>
         <span className="underline cursor-pointer ml-6" onClick={() => handleStarFilterClick('5')}>5 star ({reviewData?.five_stars}) </span> <span className="ml-2">|</span>
         <span className="underline cursor-pointer ml-2" onClick={() => handleStarFilterClick('4')}> 4 star ({reviewData?.four_stars}) </span> <span className="ml-2">|</span>
         <span className="underline cursor-pointer ml-2" onClick={() => handleStarFilterClick('3')}> 3 star ({reviewData?.three_stars}) </span> <span className="ml-2">|</span>
@@ -62,8 +64,7 @@ function ReviewList({ bookId }) {
       </div>
       <div className='flex justify-between items-center mb-4'>
         <p className="text-gray-600">
-          Showing {(reviewData?.current_page - 1) * reviewData?.items_per_page + 1}-
-          {Math.min(reviewData?.current_page * reviewData?.items_per_page, reviewData?.count)} of {reviewData?.count} reviews
+          Showing {reviewData?.count === 0 ? 0 : reviewData?.start_item}-{reviewData?.end_item} of {reviewData?.reviews_count} reviews
         </p>
         <div className="flex gap-2">
           <Select value={sortBy} onValueChange={handleSortChange}>
@@ -89,25 +90,25 @@ function ReviewList({ bookId }) {
         </div>
 
       </div>
-      {/* Dynamic Reviews */}
-      <ScrollArea className="h-[350px]">
+      {/* Dynamic Reviews */} 
+      <ScrollArea className="max-h-[350px] overflow-y-auto">
 
-      {reviewData?.reviews?.map((review) => (
-        <div key={review.id} className="border p-3 space-y-1">
-          <div className="">
-            <span className="font-semibold text-2xl">{review.review_title}</span><span className="text-gray-500 text-md ml-4">| {review.rating_start} stars</span>
+        {reviewData?.reviews?.map((review) => (
+          <div key={review.id} className="border p-3 space-y-1">
+            <div className="">
+              <span className="font-semibold text-2xl">{review.review_title}</span><span className="text-gray-500 text-md ml-4">| {review.rating_start} stars</span>
+            </div>
+            <p className="text-sm text-gray-700">{review.review_details}</p>
+            <div className="text-xs text-gray-500">
+              {new Date(review.review_date).toLocaleDateString('en-US', {
+                year: 'numeric', month: 'long', day: 'numeric'
+              })}
+            </div>
           </div>
-          <p className="text-sm text-gray-700">{review.review_details}</p>
-          <div className="text-xs text-gray-500">
-            {new Date(review.review_date).toLocaleDateString('en-US', {
-              year: 'numeric', month: 'long', day: 'numeric'
-            })}
-          </div>
-        </div>
-      ))}
-      <ScrollBar></ScrollBar>
+        ))}
+        <ScrollBar></ScrollBar>
       </ScrollArea>
-      
+
 
       {/* Pagination (optional) */}
       <PagePagination
@@ -121,7 +122,6 @@ function ReviewList({ bookId }) {
   );
 }
 
-// You may need to import Pagination components if not globally available
 
 
 export default ReviewList;
