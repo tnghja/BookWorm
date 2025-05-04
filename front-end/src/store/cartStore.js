@@ -27,9 +27,9 @@ export const useCartStore = create((set, get) => ({
         ),
       }));
     } else {
-      // If item is new, add it to the array with quantity 1
+      // If item is new, add it to the array with the specified quantity
       set((state) => ({
-        items: [...state.items, { ...book, quantity: 1 }],
+        items: [...state.items, { ...book, quantity: quantity }],
       }));
     }
     
@@ -58,6 +58,19 @@ export const useCartStore = create((set, get) => ({
     }
   },
 
+  updateItemPrice: (bookId, newPrice, isExpired) => {
+    set((state) => ({
+      items: state.items.map((item) => 
+        item.id === bookId 
+          ? { 
+              ...item, 
+              originalPrice: isExpired ? newPrice : item.originalPrice, 
+              salePrice: isExpired ? null : newPrice
+            } 
+          : item
+      ),
+    }));
+  },
   
   clearCart: () => {
     set({ items: [] }); // Reset items array to empty
@@ -81,13 +94,12 @@ export const selectTotalItems = (state) =>
 export const selectTotalPrice = (state) =>
   state.items.reduce((total, item) => total + item.price * item.quantity, 0);
 
-export const createCartItem = (image, title, author, originalPrice, salePrice, id, quantity, totalPrice) => ({
+export const createCartItem = (image, title, author, originalPrice, salePrice, id, quantity) => ({
   image,
   title,
   author,
   originalPrice,
   salePrice,
   id,
-  quantity,
-  totalPrice
+  quantity
 });

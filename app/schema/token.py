@@ -1,24 +1,22 @@
-# Generic message
+
 from datetime import timedelta
 
 from pydantic import Field
 from sqlmodel import SQLModel
-
+from typing import Optional
 
 class Message(SQLModel):
     message: str
 
 
-# JSON payload containing access token
 class Token(SQLModel):
     access_token: str
-    refresh_token: str
     token_type: str = "Bearer"
 
 
 # Contents of JWT token
 class TokenPayload(SQLModel):
-    payload: str | None = None
+    sub: str | None = None
 
 
 class NewPassword(SQLModel):

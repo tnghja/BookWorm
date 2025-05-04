@@ -21,5 +21,5 @@ class BaseReview(SQLModel):
 class Review(BaseReview, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     book_id: int = Field(foreign_key="book.id", index=True)
-
+    
     book: "Book" = Relationship(back_populates="reviews")

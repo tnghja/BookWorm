@@ -10,7 +10,6 @@ import {
 import {
   login as apiLogin,
   logout as apiLogout,
-  storeAuthTokens,
   getCurrentUser,
   apiRefresh,
   getTokenExpiryDate,
@@ -41,7 +40,7 @@ export function AuthProvider({ children }) {
 
       try {
         const refreshData = await apiRefresh();
-        currentToken = refreshData;
+        currentToken = refreshData.access_token;
 
         if (currentToken) {
           try {
@@ -76,7 +75,7 @@ export function AuthProvider({ children }) {
 
     initializeAuth();
   }, []);
-
+  
   const loginHandler = useCallback(async (email, password) => {
     setIsLoading(true);
     setError(null);
@@ -89,7 +88,6 @@ export function AuthProvider({ children }) {
 
     try {
       const authData = await apiLogin(email, password);
-      storeAuthTokens(authData);
       setAccessToken(authData.access_token);
       const expiryDate = getTokenExpiryDate(authData.access_token);
       setTokenExpiry(expiryDate);
@@ -114,7 +112,7 @@ export function AuthProvider({ children }) {
   const logoutHandler = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    const userObjectToStoreAsPrev = user;
+  const userObjectToStoreAsPrev = user;
     setPrevUser(userObjectToStoreAsPrev);
 
     try {

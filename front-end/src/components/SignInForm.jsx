@@ -5,7 +5,6 @@ import { useAuth } from './context/AuthContext';import { Button } from './ui/But
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 
 export default function SignInForm({  open: controlledOpen, onOpenChange }) {  const [email, setEmail] = useState('');
@@ -23,12 +22,7 @@ export default function SignInForm({  open: controlledOpen, onOpenChange }) {  c
     e.preventDefault();
     setLoading(true);
     // Optionally clear previous errors before attempting login
-
-      await login(email, password);
-
-      if (onSuccessfulLogin) {
-        onSuccessfulLogin(); // Call optional callback if provided
-      }
+    await login(email, password);
   };
 
   useEffect(() => {

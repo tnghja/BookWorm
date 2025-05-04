@@ -27,25 +27,11 @@ TokenDep = Annotated[str, Depends(reusable_oauth2)]
 
 def get_current_user(session: SessionDep, token: TokenDep) -> Type[User]:
     try:
-        # Decode and print the raw payload for debugging
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
         )
-        print("Raw JWT payload:", payload)
-
-        # Validate payload structure
-        if "sub" not in payload:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Invalid token payload: missing 'sub' claim"
-            )
-
-        # Try to parse the payload into our TokenPayload model
-        token_data = TokenPayload(**{"payload": payload["sub"]})
-
-        # Convert user ID to int, with error handling
         try:
-            user_id = int(token_data.payload)
+            user_id = int(payload.get("sub"))
         except (TypeError, ValueError):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -95,28 +81,13 @@ def validate_refresh_token(*, authorization_header: str = Header(..., alias="Aut
     try:
         # Expecting 'Bearer <token>'
         parts = authorization_header.split()
-        if len(parts) != 2 or parts[0].lower() != 'bearer':
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Malformed authorization header"
-            )
         refresh_token = parts[1]
         payload = jwt.decode(
             refresh_token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
         )
-        print('Decoded refresh token payload:', payload)
         user_id = payload.get('sub')
         exp = payload.get('exp')
-        if not user_id:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token payload: missing 'sub' claim"
-            )
-        if not exp:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token payload: missing 'exp' claim"
-            )
+        
         from datetime import datetime, timezone
         now = datetime.now(timezone.utc).timestamp()
         if now > exp:
@@ -127,7 +98,7 @@ def validate_refresh_token(*, authorization_header: str = Header(..., alias="Aut
     except (jwt.InvalidTokenError, ValidationError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired refresh token"
+            detail="Invalid refresh token"
         )
 
     user = session.get(User, int(user_id))

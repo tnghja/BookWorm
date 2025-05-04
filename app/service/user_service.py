@@ -3,7 +3,7 @@ from typing import Any
 
 from sqlmodel import Session, select
 
-from app.core.security import get_password_hash, verify_password
+from app.core.security import get_password_hash, verify_password, hash_token
 from app.model import User
 from app.schema.user import UserUpdate,UserCreate
 
@@ -51,10 +51,17 @@ def authenticate(*, session: Session, email: str, password: str) -> User | None:
         return None
     return db_user
 
-def update_refresh_token(*, session: Session,email : str, refresh_token) -> None:
-    db_user = get_user_by_email(session=session, email=email)
-    db_user.refresh_token = refresh_token
-    session.add(db_user)
+def update_refresh_token(*, session: Session, user: User, refresh_token: str) -> None:
+    """Updates the user's hashed refresh token in the database."""
+    user.refresh_token = hash_token(refresh_token)
+    session.add(user)
     session.commit()
+    session.refresh(user) # Refresh to get updated state if needed elsewhere
 
+# Added function to clear the hash on logout
+def clear_refresh_token(*, session: Session, user: User) -> None:
+    """Clears the user's hashed refresh token in the database."""
+    user.refresh_token = None
+    session.add(user)
+    session.commit()
 

@@ -31,6 +31,7 @@ def get_star_distribution(session: SessionDep, book_id: int) -> Dict[int, int]:
     
     return star_counts
 
+
 def get_review_stats(session: SessionDep, book_id: int) -> Tuple[float, int]:
     """Get average rating and total review count for a book"""
     query = (
@@ -47,11 +48,9 @@ def get_review_stats(session: SessionDep, book_id: int) -> Tuple[float, int]:
     
     return avg_rating, total_reviews
 
-def get_reviews_for_book(session: SessionDep, book_id: int, req: ReviewRequest) -> ReviewResponse:
-    """
-    Get reviews for a book with filtering and sorting options.
-    Includes star distribution and average rating.
-    """
+
+def _build_base_review_query(book_id: int, req: ReviewRequest):
+    """Build the base query for reviews with filters and sorting."""
     # Base query for reviews
     query = select(Review).where(Review.book_id == book_id)
     
@@ -64,7 +63,12 @@ def get_reviews_for_book(session: SessionDep, book_id: int, req: ReviewRequest) 
         query = query.order_by(desc(Review.review_date))
     elif req.sort_by == 'oldest':
         query = query.order_by(asc(Review.review_date))
-    
+        
+    return query
+
+
+def _apply_pagination(session: SessionDep, query, req: ReviewRequest):
+    """Apply pagination and get count information."""
     # Get total count for pagination
     count_query = select(func.count()).select_from(query.subquery())
     total_count = session.exec(count_query).one()
@@ -76,10 +80,39 @@ def get_reviews_for_book(session: SessionDep, book_id: int, req: ReviewRequest) 
     # Apply pagination
     query = query.offset(offset).limit(req.items_per_page)
     
-    # Execute query
+    return query, total_count, offset, total_pages
+
+
+def _prepare_pagination_info(total_count: int, offset: int, req: ReviewRequest):
+    """Prepare pagination information for response."""
+    if total_count > 0:
+        start_item = offset + 1
+        end_item = min(offset + req.items_per_page, total_count)
+    else:
+        start_item = 0
+        end_item = 0
+    
+    return start_item, end_item
+
+
+def get_reviews_for_book(session: SessionDep, book_id: int, req: ReviewRequest) -> ReviewResponse:
+    """
+    Get reviews for a book with filtering and sorting options.
+    Includes star distribution and average rating.
+    """
+    # 1. Build the base query with filters and sorting
+    query = _build_base_review_query(book_id, req)
+    
+    # 2. Apply pagination and get count info
+    query, total_count, offset, total_pages = _apply_pagination(session, query, req)
+    
+    # 3. Get pagination info for response
+    start_item, end_item = _prepare_pagination_info(total_count, offset, req)
+    
+    # 4. Execute query
     reviews = session.exec(query).all()
     
-    # Get star distribution and stats
+    # 5. Get star distribution and stats
     star_counts = get_star_distribution(session, book_id)
     avg_rating, total_reviews = get_review_stats(session, book_id)
     
@@ -89,8 +122,8 @@ def get_reviews_for_book(session: SessionDep, book_id: int, req: ReviewRequest) 
         current_page=req.page,
         items_per_page=req.items_per_page,
         total_pages=total_pages,
-        start_item=offset + 1 if total_count > 0 else 0,
-        end_item=min(offset + req.items_per_page, total_count),
+        start_item=start_item,
+        end_item=end_item,
         avg_rating=avg_rating,
         reviews_count=total_reviews,
         five_stars=star_counts[5],
@@ -101,38 +134,41 @@ def get_reviews_for_book(session: SessionDep, book_id: int, req: ReviewRequest) 
     )
 
 
-def create_review(book_id: int, user: User, session: SessionDep, req: ReviewCreateRequest) -> BaseReview:
-
-
+def _check_purchase_eligibility(session: SessionDep, book_id: int, user_id: int):
+    """Check if user has purchased the book and is eligible to review it."""
     user_orders_subquery = (
         select(Order.id)
-        .where(Order.user_id == user.id)
-        .scalar_subquery() # Use scalar_subquery if expecting one or zero, or just subquery()
+        .where(Order.user_id == user_id)
+        .scalar_subquery()
     )
 
     stmt = (
         select(OrderItem)
-        .where(OrderItem.order_id.in_(user_orders_subquery)) # Check if the order item belongs to one of the user's orders
+        .where(OrderItem.order_id.in_(user_orders_subquery))
         .where(OrderItem.book_id == book_id)
     )
 
-    # Execute the query to find a matching order item
     purchased_item = session.exec(stmt).first()
-
-    # Check if a matching OrderItem was found (meaning the user purchased the book)
+    
     if not purchased_item:
         raise HTTPException(
             status_code=403,
-            detail="User has not purchased this book or no such order exists."
+            detail="User has not purchased this book"
         )
 
+
+def create_review(book_id: int, user: User, session: SessionDep, req: ReviewCreateRequest) -> BaseReview:
+    # Check if user has purchased the book
+    _check_purchase_eligibility(session, book_id, user.id)
+
+    # Create review
     review = Review(
         book_id=book_id,
-        user_id=user.id, # Associate review with the user
+        user_id=user.id,
         review_title=req.title,
         review_details=req.details,
         rating_start=req.star,
-        review_date=datetime.today() # Consider using timezone-aware datetime
+        review_date=datetime.today()
     )
 
     # Add, commit, and refresh the session

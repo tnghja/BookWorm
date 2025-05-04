@@ -5,10 +5,10 @@ import App from './App.jsx'
 import { AuthProvider } from '@/components/context/AuthContext';
 import CartPersistenceManager from '@/components/CartPersistenceManager';
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
+
    <AuthProvider>
    <CartPersistenceManager />
       <App />
     </AuthProvider>
-  </StrictMode>,
+
 )

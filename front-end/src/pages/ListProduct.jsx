@@ -7,15 +7,6 @@ import { getCategories } from '../api/category';
 import { getAuthors } from '../api/author';
 import PagePagination from '../components/PagePagination';
 
-// Import UI Components
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-
 import {
     Accordion,
     AccordionContent,
@@ -37,25 +28,44 @@ import generatePageNumbers from '../helper/helper';
 export default function ListProduct() {
     const [currentPage, setCurrentPage] = useState(1);
     const [sortBy, setSortBy] = useState('on_sale'); // Default sort
-    const [selectedCategory, setSelectedCategory] = useState('all');
-    const [selectedAuthor, setSelectedAuthor] = useState('all');
+    const [selectedCategoryId, setSelectedCategoryId] = useState('all');
+    const [selectedAuthorId, setSelectedAuthorId] = useState('all');
     const [selectedRating, setSelectedRating] = useState('all'); // Store the string representation 'all', '5', '4', etc.
     const [itemsPerPage, setItemsPerPage] = useState(20); // Default items per page
     const navigate = useNavigate();
+
+    // Fetch data from APIs
+    const { data: authors = [] } = useQuery({
+        queryKey: ['authors'],
+        queryFn: getAuthors,
+    });
+
+    const { data: categories = [] } = useQuery({
+        queryKey: ['categories'],
+        queryFn: getCategories,
+    });
+
+    // Find selected category and author names based on IDs
+    const selectedCategory = useMemo(() => {
+        if (selectedCategoryId === 'all') return { id: 'all', category_name: 'all' };
+        return categories.find(category => category.id === selectedCategoryId) || { id: 'all', category_name: 'all' };
+    }, [selectedCategoryId, categories]);
+
+    const selectedAuthor = useMemo(() => {
+        if (selectedAuthorId === 'all') return { id: 'all', author_name: 'all' };
+        return authors.find(author => author.id === selectedAuthorId) || { id: 'all', author_name: 'all' };
+    }, [selectedAuthorId, authors]);
+
     // --- Derived State and API Query Params ---
     // Use useMemo to prevent recalculating params on every render unless dependencies change
     const bookParams = useMemo(() => ({
-        category_name: selectedCategory !== 'all' ? selectedCategory : undefined,
-        author_name: selectedAuthor !== 'all' ? selectedAuthor : undefined,
-        rating: selectedRating !== 'all' ? parseInt(selectedRating) : undefined,
+        category_name: selectedCategory.category_name !== 'all' ? selectedCategory.category_name : undefined,
+        author_name: selectedAuthor.author_name !== 'all' ? selectedAuthor.author_name : undefined,
+        min_rating: selectedRating !== 'all' ? parseInt(selectedRating) : undefined,
         sort_by: sortBy,
         page: currentPage,
         items_per_page: itemsPerPage,
     }), [selectedCategory, selectedAuthor, selectedRating, sortBy, currentPage, itemsPerPage]);
-
-    const handleProductPage = (id) => {
-        navigate(`/product/${id}`);
-    }
 
     const {
         data: booksData,
@@ -67,16 +77,6 @@ export default function ListProduct() {
         queryFn: () => getBooks(bookParams),
         keepPreviousData: true, // Good for pagination UX
         staleTime: 5 * 60 * 1000, // Optional: Keep data fresh for 5 minutes
-    });
-
-    const { data: authors = [] } = useQuery({
-        queryKey: ['authors'],
-        queryFn: getAuthors,
-    });
-
-    const { data: categories = [] } = useQuery({
-        queryKey: ['categories'],
-        queryFn: getCategories,
     });
 
     // --- Calculated Values ---
@@ -95,13 +95,7 @@ export default function ListProduct() {
         setter(value);
         setCurrentPage(1); // Reset to first page when filters change
     };
-
-    const handleRatingClick = (ratingValue) => {
-        // Extract number from 'X Star' or handle 'All'
-        const valueToSet = ratingValue === 'all' ? 'all' : ratingValue.split(' ')[0];
-        handleFilterChange(setSelectedRating, valueToSet);
-    };
-
+ 
     // Explicit handler for Sort Select
     const handleSortChange = (value) => {
         handleFilterChange(setSortBy, value);
@@ -109,7 +103,6 @@ export default function ListProduct() {
 
     // Explicit handler for Items Per Page Select
     const handleItemsPerPageChange = (value) => {
-        // Convert value to number before setting
         handleFilterChange(setItemsPerPage, parseInt(value, 10));
     };
 
@@ -121,13 +114,11 @@ export default function ListProduct() {
         return <div className="container mx-auto px-4 py-8 text-center text-red-600">Error loading books: {booksError?.message || 'Unknown error'}</div>;
     }
 
-    // --- Render Logic ---
     const pageNumbers = generatePageNumbers(currentPage, totalPages);
 
     const startItemIndex = totalBooks === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
     const endItemIndex = Math.min(currentPage * itemsPerPage, totalBooks);
 
-    // Helper to create filter buttons
     const renderFilterButton = (key, value, display, selectedValue, handler) => (
         <Button
             key={key}
@@ -143,38 +134,44 @@ export default function ListProduct() {
     const ratingsOptions = ['All', '5 Star', '4 Star', '3 Star', '2 Star', '1 Star'];
 
     return (
-        <div className="container mx-auto px-4 py-8">
+        <>
+        
+        <div className="container mx-auto px-4 ">
             {/* Breadcrumbs */}
-            <Breadcrumb className="mb-4">
-                <BreadcrumbList>
-                    <BreadcrumbItem>
-                        <BreadcrumbLink href="/">Home</BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator />
-                    <BreadcrumbItem>
-                        <BreadcrumbLink href="/shop">Shop</BreadcrumbLink>
-                    </BreadcrumbItem>
-                </BreadcrumbList>
-            </Breadcrumb>
-
-            <div className="flex flex-col md:flex-row gap-6">
+            <h1 className="text-2xl font-bold mb-4">
+                Books
+                {selectedCategory.category_name !== 'all' && (
+                    <span className="text-gray-500 text-sm"> (Filtered by {selectedCategory.category_name}</span>
+                )}
+                {selectedAuthor.author_name !== 'all' && (
+                    <span className="text-gray-500 text-sm">
+                        {selectedCategory.category_name !== 'all' ? ' and ' : ' (Filtered by '}
+                        {selectedAuthor.author_name}
+                    </span>
+                )}
+                {(selectedCategory.category_name !== 'all' || selectedAuthor.author_name !== 'all') && <span className="text-gray-500 text-sm">)</span>}
+            </h1>
+            <hr className=''/>
+            <div className="flex flex-col md:flex-row gap-6 mt-8">
                 {/* Filters Sidebar */}
-                <aside className="w-full md:w-64 lg:w-72 bg-white p-4 rounded-lg shadow-sm flex-shrink-0">
+                <aside className="w-full md:w-36 lg:w-54 bg-white p-4 rounded-lg shadow-sm flex-shrink-0">
                     <h2 className="text-xl font-semibold mb-4 border-b pb-2">Filter By</h2>
                     <Accordion type="multiple" collapsible="true" className="w-full" defaultValue={['categories', 'authors']}>
                         {/* Categories Filter */}
                         <AccordionItem value="categories">
-                            <AccordionTrigger>Categories</AccordionTrigger>
+                            <AccordionTrigger>
+                                Categories
+                            </AccordionTrigger>
                             <AccordionContent>
                                 <ScrollArea className="h-[180px] w-full rounded-md">
                                     <div className="flex flex-col space-y-1 pr-4">
-                                        {renderFilterButton('cat-all', 'all', 'All Categories', selectedCategory, (val) => handleFilterChange(setSelectedCategory, val))}
+                                        {renderFilterButton('cat-all', 'all', 'All Categories', selectedCategoryId, (val) => handleFilterChange(setSelectedCategoryId, val))}
                                         {categories.map((category) => renderFilterButton(
                                             category.id,
+                                            category.id,
                                             category.category_name,
-                                            category.category_name,
-                                            selectedCategory,
-                                            (val) => handleFilterChange(setSelectedCategory, val)
+                                            selectedCategoryId,
+                                            (val) => handleFilterChange(setSelectedCategoryId, val)
                                         ))}
                                     </div>
                                     <ScrollBar orientation="vertical" />
@@ -184,17 +181,19 @@ export default function ListProduct() {
 
                         {/* Authors Filter */}
                         <AccordionItem value="authors">
-                            <AccordionTrigger>Authors</AccordionTrigger>
+                            <AccordionTrigger>
+                                Authors
+                            </AccordionTrigger>
                             <AccordionContent>
                                 <ScrollArea className="h-[180px] w-full rounded-md">
                                     <div className="flex flex-col space-y-1 pr-4">
-                                        {renderFilterButton('author-all', 'all', 'All Authors', selectedAuthor, (val) => handleFilterChange(setSelectedAuthor, val))}
+                                        {renderFilterButton('author-all', 'all', 'All Authors', selectedAuthorId, (val) => handleFilterChange(setSelectedAuthorId, val))}
                                         {authors.map((author) => renderFilterButton(
                                             author.id,
+                                            author.id,
                                             author.author_name,
-                                            author.author_name,
-                                            selectedAuthor,
-                                            (val) => handleFilterChange(setSelectedAuthor, val)
+                                            selectedAuthorId,
+                                            (val) => handleFilterChange(setSelectedAuthorId, val)
                                         ))}
                                     </div>
                                     <ScrollBar orientation="vertical" />
@@ -204,7 +203,9 @@ export default function ListProduct() {
 
                         {/* Ratings Filter */}
                         <AccordionItem value="ratings">
-                            <AccordionTrigger>Ratings</AccordionTrigger>
+                            <AccordionTrigger>
+                                Ratings{selectedRating !== 'all' ? `: ${selectedRating} Star` : ''}
+                            </AccordionTrigger>
                             <AccordionContent>
                                 <ScrollArea className="h-[180px] w-full rounded-md">
                                     {/* Ensure rating value passed matches expected format ('all', '5', '4'...) */}
@@ -250,10 +251,10 @@ export default function ListProduct() {
                                     <SelectValue placeholder="Show" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="10">10</SelectItem>
+                                    <SelectItem value="5">5</SelectItem>
+                                    <SelectItem value="15">15</SelectItem>
                                     <SelectItem value="20">20</SelectItem>
-                                    <SelectItem value="30">30</SelectItem>
-                                    <SelectItem value="50">50</SelectItem>
+                                    <SelectItem value="25">25</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -289,5 +290,6 @@ export default function ListProduct() {
                 </div>
             </div>
         </div>
+        </>
     );
 }

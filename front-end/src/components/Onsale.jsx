@@ -47,7 +47,7 @@ export default function Onsale() {
         <div className="container mx-auto px-4 py-8">
             <div className="flex justify-between items-center mb-6">
                 <div className="text-2xl font-bold">On Sale Books</div>
-                <Link to="/shop" className="p-2 bg-blue-300 hover:bg-blue-400 rounded-md flex items-center">
+                <Link to="/shop" className="p-2 bg-black hover:bg-gray-700 rounded-md flex items-center text-white">
                     <span className="mr-1">View All</span>
                     <ChevronRight size={18} />
                 </Link>
@@ -61,7 +61,7 @@ export default function Onsale() {
 
             {loading ? (
                 <div className="flex justify-center items-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-800"></div>
                 </div>
             ) : (
                 <div className="mt-4">
