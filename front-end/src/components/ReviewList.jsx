@@ -48,23 +48,27 @@ function ReviewList({ bookId }) {
     setCurrentPage(1);
   }
 
-  const pageNumbers = generatePageNumbers(reviewData?.current_page, reviewData?.total_pages);
+
+  const hasReviews = reviewData?.reviews_count > 0;
+  const totalPages = hasReviews ? reviewData?.total_pages : 1;
+  const pageNumbers = generatePageNumbers(reviewData?.current_page || 1, totalPages || 1);
+  
   return (
     <>
 
       <div className="text-lg font-semibold">Customer Reviews</div>
-      <div className="text-2xl font-bold gap-4 ">{reviewData?.avg_rating.toFixed(1)} Star</div>
+      <div className="text-2xl font-bold gap-4 ">{reviewData?.avg_rating?.toFixed(1) || '0.0'} Star</div>
       <div className="text-sm text-gray-600 gap-4">
-        <span className="underline cursor-pointer " onClick={() => handleStarFilterClick('all')}>All({reviewData?.reviews_count}) </span>
-        <span className="underline cursor-pointer ml-6" onClick={() => handleStarFilterClick('5')}>5 star ({reviewData?.five_stars}) </span> <span className="ml-2">|</span>
-        <span className="underline cursor-pointer ml-2" onClick={() => handleStarFilterClick('4')}> 4 star ({reviewData?.four_stars}) </span> <span className="ml-2">|</span>
-        <span className="underline cursor-pointer ml-2" onClick={() => handleStarFilterClick('3')}> 3 star ({reviewData?.three_stars}) </span> <span className="ml-2">|</span>
-        <span className="underline cursor-pointer ml-2" onClick={() => handleStarFilterClick('2')}> 2 star ({reviewData?.two_stars}) </span> <span className="ml-2">|</span>
-        <span className="underline cursor-pointer ml-2" onClick={() => handleStarFilterClick('1')}> 1 star ({reviewData?.one_stars})</span>
+        <span className="underline cursor-pointer " onClick={() => handleStarFilterClick('all')}>All({reviewData?.reviews_count || 0}) </span>
+        <span className="underline cursor-pointer ml-6" onClick={() => handleStarFilterClick('5')}>5 star ({reviewData?.five_stars || 0}) </span> <span className="ml-2">|</span>
+        <span className="underline cursor-pointer ml-2" onClick={() => handleStarFilterClick('4')}> 4 star ({reviewData?.four_stars || 0}) </span> <span className="ml-2">|</span>
+        <span className="underline cursor-pointer ml-2" onClick={() => handleStarFilterClick('3')}> 3 star ({reviewData?.three_stars || 0}) </span> <span className="ml-2">|</span>
+        <span className="underline cursor-pointer ml-2" onClick={() => handleStarFilterClick('2')}> 2 star ({reviewData?.two_stars || 0}) </span> <span className="ml-2">|</span>
+        <span className="underline cursor-pointer ml-2" onClick={() => handleStarFilterClick('1')}> 1 star ({reviewData?.one_stars || 0})</span>
       </div>
       <div className='flex justify-between items-center mb-4'>
         <p className="text-gray-600">
-          Showing {reviewData?.count === 0 ? 0 : reviewData?.start_item}-{reviewData?.end_item} of {reviewData?.reviews_count} reviews
+          Showing {reviewData?.count === 0 ? 0 : reviewData?.start_item}-{reviewData?.end_item} of {reviewData?.reviews_count || 0} reviews
         </p>
         <div className="flex gap-2">
           <Select value={sortBy} onValueChange={handleSortChange}>
@@ -110,10 +114,10 @@ function ReviewList({ bookId }) {
       </ScrollArea>
 
 
-      {/* Pagination (optional) */}
+      {/* Always show pagination but disable clicks when no reviews */}
       <PagePagination
-        currentPage={reviewData?.current_page}
-        totalPages={reviewData?.total_pages}
+        currentPage={reviewData?.current_page || 1}
+        totalPages={totalPages}
         onPageChange={handlePageChange}
         pageNumbers={pageNumbers}
       />

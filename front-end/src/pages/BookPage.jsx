@@ -29,7 +29,7 @@ export default function BookPage() {
 
   const [reviewTitle, setReviewTitle] = useState("");
   const [reviewDetails, setReviewDetails] = useState("");
-  const [reviewRating, setReviewRating] = useState("1");
+  const [reviewRating, setReviewRating] = useState("5");
   const [reviewError, setReviewError] = useState("");
 
   const { data: bookData,
@@ -176,7 +176,7 @@ export default function BookPage() {
           </div>
 
           {/* Price and Cart */}
-          <div className="border  space-y-4 col-span-2">
+          <div className="border h-2/3 space-y-4 col-span-2 ">
 
             {bookData?.book.book_price !== bookData?.final_price ? (
               <span className="text-xl md:text-2xl font-bold text-red-600 bg-gray-200 h-15 justify-start items-center flex ">
@@ -265,11 +265,12 @@ export default function BookPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="1">1 star</SelectItem>
-                <SelectItem value="2">2 stars</SelectItem>
-                <SelectItem value="3">3 stars</SelectItem>
-                <SelectItem value="4">4 stars</SelectItem>
                 <SelectItem value="5">5 stars</SelectItem>
+                <SelectItem value="4">4 stars</SelectItem>
+                <SelectItem value="3">3 stars</SelectItem>
+                <SelectItem value="2">2 stars</SelectItem>
+                <SelectItem value="1">1 star</SelectItem>
+                
               </SelectContent>
             </Select>
             
