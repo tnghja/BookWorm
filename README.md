@@ -98,7 +98,3 @@ This project consists of:
 ├── tests/                # Test suite
 └── README.md             # This file
 ```
-
-## License
-
-[MIT License](LICENSE) 
