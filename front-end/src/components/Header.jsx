@@ -60,7 +60,7 @@ export default function Header() {
   const handleLogout = () => {
     logout();
     setIsMobileMenuOpen(false); // Close mobile menu on logout
-    // REMOVE setIsDialogOpen(false);
+    setShowSignIn(false);
   };
   const handleLogin = () => {
     setShowSignIn(true);

@@ -180,7 +180,7 @@ export default function BookPage() {
 
             {bookData?.book.book_price !== bookData?.final_price ? (
               <span className="text-xl md:text-2xl font-bold text-red-600 bg-gray-200 h-15 justify-start items-center flex ">
-                <span className="line-through text-gray-400 mr-2 ml-5">{convertAndFormat(bookData?.book.book_price)}</span>{convertAndFormat(bookData?.final_price)}
+                <span className="line-through text-sm md:text-sm text-gray-400 mr-2 ml-5">{convertAndFormat(bookData?.book.book_price)}</span>{convertAndFormat(bookData?.final_price)}
               </span>
             ) :
               (<span className="px-4 text-xl md:text-2xl font-bold text-black bg-gray-200 h-15 justify-start items-center flex ">

@@ -257,7 +257,7 @@ export default function CartPage() {
         </DialogContent>
       </Dialog>
       <div className="container w-full mx-auto p-4">
-        <h1 className="text-lg mb-6">Your cart: {items.length} items</h1>
+        <h1 className="text-lg mb-6">Your cart: {items.reduce((sum, item) => sum + item.quantity, 0)} {items.reduce((sum, item) => sum + item.quantity, 0) === 1 ? 'item' : 'items'}</h1>
         <hr className="my-8 border-gray-400" />
         <div className="flex flex-col justify-center md:grid md:grid-cols-7 md:gap-6">
           <div className="col-span-5 border-2 p-4">

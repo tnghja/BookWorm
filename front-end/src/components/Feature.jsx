@@ -38,8 +38,8 @@ export default function Feature() {
     return (
         <div className="container mx-auto px-4 py-8">
             <div className="justify-between items-center mb-6 flex flex-row sm:flex-col">
-                <h1 className="text-2xl font-bold">Feature Books</h1>
-                <div className="flex gap-4">
+                <h1 className=" md:text-2xl font-bold">Feature Books</h1>
+                <div className=" flex gap-4">
                     <nav 
                         className={`${activeTab === 'recommended' ? 'bg-black text-white' : 'bg-gray-800'} hover:bg-gray-700 rounded-md p-2 w-30 text-center cursor-pointer text-white`}
                         onClick={() => setActiveTab('recommended')}
